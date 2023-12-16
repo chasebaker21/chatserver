@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #chatbox {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: none;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"] {
+            background-color: #4caf50;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        ul li {
+            background-color: #e0e0e0;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="chatbox">
+    <ul id="messages"></ul>
+    <form>
+        <textarea placeholder="Type your message..."></textarea>
+        <input type="submit" value="Send"/>
+    </form>
+</div>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script>
+    $(function () {
+        let socket = null;
+        let msgBox = $("#chatbox textarea");
+        let messages = $("#messages");
+
+        function addMessage(message) {
+            messages.append($("<li>").text(message));
+        }
+
+        $("#chatbox form").submit(function () {
+            if (!msgBox.val()) return false;
+            if (!socket) {
+                alert("Error: There is no socket connection.");
+                return false;
+            }
+
+            socket.send(msgBox.val());
+            msgBox.val("");
+            return false;
+        });
+
+        function handleNewUser(data) {
+            addMessage(data.message);
+        }
+
+        if (!window["WebSocket"]) {
+            alert("Error: Your browser does not support web sockets.");
+        } else {
+            socket = new WebSocket("ws://{{.Host}}/room");
+            socket.onclose = function () {
+                alert("Connection has been closed.");
+            };
+            socket.onmessage = function (e) {
+                console.log({e})
+                const data = JSON.parse(e.data);
+                if (data.type === 'userJoined') {
+                    handleNewUser(data)
+                } else {
+                    addMessage(data.message)
+                }
+            };
+        }
+    })
+</script>
+</body>
+</html>
