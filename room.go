@@ -35,8 +35,6 @@ const (
 	messageBufferSize = 256
 )
 
-var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
-
 // Create a new room
 func newRoom() *room {
 	room := &room{
@@ -71,6 +69,14 @@ func (r *room) run() {
 		}
 	}
 }
+
+var upgrader = &websocket.Upgrader{
+	ReadBufferSize:  socketBufferSize,
+	WriteBufferSize: socketBufferSize,
+	CheckOrigin: func(r *http.Request) bool {
+		// Will only allow connection to localhost:3000
+		return r.Header.Get("Origin") == "http://localhost:3000"
+	}}
 
 // ServeHTTP upgrades the HTTP connection to a WebSocket connection
 func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
